@@ -19,6 +19,16 @@ if (sys.argv[1].strip() == 'latest'):
   directoryfiles = [f for f in os.listdir('.') if os.path.isfile(f)]
   filteredfiles  = filter(lambda x: x.endswith('.hdf5'), directoryfiles)
   sortedfiles    = sorted(filteredfiles, key=lambda x: os.path.getmtime(x), reverse=True)
+
+  '''
+  If there are no hdf5 files
+  '''
+  if len(sortedfiles) == 0:
+    raise IOError('Could not find any DMFT files')
+
+  '''
+  Iterate through hdf5 files to look for the identifying group
+  '''
   for ifile in sortedfiles:
     try:
       with h5py.File(ifile,'r') as h5:
@@ -26,6 +36,7 @@ if (sys.argv[1].strip() == 'latest'):
       break
     except:
       continue
+    raise IOError('Could not find any DMFT files')
   fname = ifile
   print('Parsing: {}'.format(fname))
 else:
