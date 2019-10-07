@@ -19,7 +19,14 @@ if (sys.argv[1].strip() == 'latest'):
   directoryfiles = [f for f in os.listdir('.') if os.path.isfile(f)]
   filteredfiles  = filter(lambda x: x.endswith('.hdf5'), directoryfiles)
   sortedfiles    = sorted(filteredfiles, key=lambda x: os.path.getmtime(x), reverse=True)
-  fname = sortedfiles[0]
+  for ifile in sortedfiles:
+    try:
+      with h5py.File(ifile,'r') as h5:
+        test = h5['dmft-001/ineq-001']
+      break
+    except:
+      continue
+  fname = ifile
   print('Parsing: {}'.format(fname))
 else:
   fname = sys.argv[1].strip()
