@@ -1,0 +1,60 @@
+#! /usr/bin/env python
+
+from __future__ import print_function, division, absolute_import
+import numpy as np
+import matplotlib.pyplot as plt
+import h5py
+import os
+import sys
+
+
+'''
+Parse first argument
+or latest hdf5 file sorted by time stamps
+'''
+if len(sys.argv) != 2:
+  print('execute with one argument (hdf5 file)')
+
+if (sys.argv[1].strip() == 'latest'):
+  directoryfiles = [f for f in os.listdir('.') if os.path.isfile(f)]
+  filteredfiles  = filter(lambda x: x.endswith('.hdf5'), directoryfiles)
+  sortedfiles    = sorted(filteredfiles, key=lambda x: os.path.getmtime(x), reverse=True)
+  fname = sortedfiles[0]
+  print('Parsing: {}'.format(fname))
+else:
+  fname = sys.argv[1].strip()
+
+
+'''
+Do the Ncorr extraction
+'''
+
+with h5py.File(fname,'r') as h5:
+  config = h5['.config'].attrs
+  dmftsteps = config['general.dmftsteps']
+  try:
+    for istep in range(dmftsteps):
+      test = h5['dmft-{:03}/ineq-001/siw/value'.format(istep+1)]
+    laststep = dmftsteps
+  except:
+    laststep = istep
+
+  nat = config['general.nat']
+
+  print('  Found last DMFT step: {}'.format(laststep))
+
+  for iat in range(1,nat+1):
+    nd = config['atoms.{}.nd'.format(iat)]
+    accept_rem = h5['dmft-{:03}/ineq-{:03}/accept-rem/value'.format(laststep,iat)][()]
+    hist = h5['dmft-{:03}/ineq-{:03}/hist/value'.format(laststep,iat)][()]
+
+    accrate = np.max(accept_rem) # usually just the first value
+
+    histglobmax = 0
+    for ind in range(nd):
+      for ispin in range(2):
+        histmax = np.argmax(hist[ind,ispin,:]) + 1 # python indexing
+        if histmax > histglobmax: histglobmax=histmax
+
+    print('  Atom: {} - accrate: {} - histmax: {}'.format(iat,accrate,histglobmax))
+    print('    Ncorr: {}'.format(2*nd*histmax/accrate))
