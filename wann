@@ -1,0 +1,67 @@
+#! /usr/bin/env python
+
+from __future__ import print_function, division, absolute_import
+import numpy as np
+import matplotlib.pyplot as plt
+import h5py
+import sys
+import os
+
+
+# define name based on current directory
+basename = os.path.basename(os.path.abspath('.'))
+spaghetti = basename+'.spaghetti_ene'
+wannier   = basename+'_band.dat'
+
+# load the data
+
+
+def read_spaghetti(input_file):
+  index = -1
+  blocks = []
+  for line in open(input_file):
+    if not line or 'bandindex' in line:
+      index += 1
+      blocks.append([])
+    else:
+      linefloats = np.fromstring(line, dtype=np.float64, sep=' ')
+      blocks[index].append(linefloats)
+
+  blocks = np.array(blocks, dtype=np.float64)
+  return blocks
+
+def read_wannier(input_file):
+  index = 0
+  blocks = [[]]
+  for line in open(input_file):
+    if not line or line.isspace():
+      index += 1
+      blocks.append([])
+    else:
+      linefloats = np.fromstring(line, dtype=np.float64, sep=' ')
+      blocks[index].append(linefloats)
+
+  del blocks[-1]
+  blocks = np.array(blocks, dtype=np.float64)
+  return blocks
+
+data_spaghetti = read_spaghetti(spaghetti)
+# shape bands, k-points, entries
+# 5 entries ... kx, ky, kz, abs(cummulative(k)), energy
+
+data_wannier = read_wannier(wannier)
+# shape bands, k-points, energy
+
+bohr2angstrom = 0.529177
+
+# plot dft band structure
+for iband in range(data_spaghetti.shape[0]):
+  plt.scatter(data_spaghetti[iband,:,3]/bohr2angstrom,data_spaghetti[iband,:,4], color='black', s=20, marker='+')
+
+# plot wannierized bands
+for iband in range(data_wannier.shape[0]):
+  plt.plot(data_wannier[iband,:,0], data_wannier[iband,:,1], color='red', lw=2)
+
+plt.axhline(y=0, lw=2, ls='--', color='gray')
+
+plt.show()
