@@ -66,7 +66,8 @@ with h5py.File(fname,'r') as h5:
     accept_rem = h5['dmft-{:03}/ineq-{:03}/accept-rem/value'.format(laststep,iat)][()]
     hist = h5['dmft-{:03}/ineq-{:03}/hist/value'.format(laststep,iat)][()]
 
-    accrate = np.max(accept_rem) # usually just the first value
+    # accrate = np.max(accept_rem) # usually just the first value
+    accrate = accept_rem[0]
 
     histglobmax = 0
     for ind in range(nd):
@@ -75,4 +76,4 @@ with h5py.File(fname,'r') as h5:
         if histmax > histglobmax: histglobmax=histmax
 
     print('  Atom: {} - accrate: {} - histmax: {}'.format(iat,accrate,histglobmax))
-    print('    Ncorr: {}'.format(2*nd*histmax/accrate))
+    print('    Ncorr: {}'.format(2*nd*histglobmax/accrate))
